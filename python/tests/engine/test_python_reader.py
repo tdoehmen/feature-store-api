@@ -61,6 +61,45 @@ class TestPythonReader:
         assert len(df_list) == 1
         assert dataframe_fixture_basic.equals(df_list[0])
 
+    def test_read_s3_parquet_union(self, mocker, dataframe_fixture_basic_union):
+        python_engine = python.Engine()
+
+        with mock_s3():
+            s3 = boto3.client(
+                "s3",
+                aws_access_key_id="",
+                aws_secret_access_key="",
+            )
+            conn = boto3.resource("s3", region_name="us-east-1")
+            conn.create_bucket(Bucket="test-parquet-reading")
+            with open("python/tests/data/test_basic.parquet", "rb") as data:
+                s3.upload_fileobj(data, "test-parquet-reading", "test_basic.parquet")
+            with open("python/tests/data/test_basic_2.parquet", "rb") as data:
+                s3.upload_fileobj(data, "test-parquet-reading", "test_basic_2.parquet")
+            connector = S3Connector(
+                1,
+                "test",
+                1,
+                description="Test",
+                # members specific to type of connector
+                access_key=None,
+                secret_key=None,
+                server_encryption_algorithm=None,
+                server_encryption_key=None,
+                bucket="test-parquet-reading",
+                session_token=None,
+            )
+
+            # Act
+            df = python_engine.read(
+                connector, "parquet", None, "s3://test-parquet-reading/"
+            )
+
+        # Assert
+        assert len(df) == 8
+        assert dataframe_fixture_basic_union.equals(df)
+
+
     def test_read_s3_csv(self, mocker, dataframe_fixture_basic):
         python_engine = python.Engine()
 
