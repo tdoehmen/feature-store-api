@@ -13,48 +13,34 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+
 import statistics
 
-import pytest
 import pandas as pd
 import numpy as np
 import datetime
 from pyspark.sql.types import (
-    ByteType,
-    ShortType,
     IntegerType,
-    LongType,
-    FloatType,
     DoubleType,
-    DecimalType,
     DateType,
     StringType,
     TimestampType,
     StructType,
-    BinaryType,
     BooleanType,
     StructField,
-    MapType,
 )
-from pyspark.sql.functions import lit
 
 from hsfs import (
-    feature_group,
     training_dataset,
     transformation_function,
-    feature,
-    storage_connector,
-    expectation_suite,
     training_dataset_feature,
 )
 from hsfs.engine import spark
 from hsfs.engine import python
-from hsfs.constructor import query, hudi_feature_group_alias
-from hsfs.client import exceptions
 from hsfs.core.transformation_function_engine import TransformationFunctionEngine
 
-class TestPythonSparkTransformationFuctions:
 
+class TestPythonSparkTransformationFuctions:
     def _create_training_dataset(self, tf_fun, outp_type, name=None, col="col_0"):
         if isinstance(tf_fun, str):
             tf = transformation_function.TransformationFunction(
@@ -130,9 +116,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -142,9 +132,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",DoubleType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", DoubleType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [0.5, 1.0],
@@ -152,19 +146,35 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
-        tf_fun = "{\"module_imports\": \"from datetime import datetime\", \"transformer_code\": " \
-                 "\"def min_max_scaler(value, min_value,max_value):\\n    if value is None:\\n        " \
-                 "return None\\n    else:\\n        try:\\n            return (value - min_value) / (max_value - min_value)\\n" \
-                 "        except ZeroDivisionError:\\n            return 0\\n\"}"
+        tf_fun = (
+            '{"module_imports": "from datetime import datetime", "transformer_code": '
+            '"def min_max_scaler(value, min_value,max_value):\\n    if value is None:\\n        '
+            "return None\\n    else:\\n        try:\\n            return (value - min_value) / (max_value - min_value)\\n"
+            '        except ZeroDivisionError:\\n            return 0\\n"}'
+        )
 
         td = self._create_training_dataset(tf_fun, "double", "min_max_scaler")
 
-        td.transformation_functions["col_0"] = TransformationFunctionEngine.populate_builtin_fn_arguments(
-            "col_0", td.transformation_functions["col_0"],
-            {"columns": [{"column": "col_0", "dataType": "Integral", "minimum": 0, "maximum": 2}]}
+        td.transformation_functions[
+            "col_0"
+        ] = TransformationFunctionEngine.populate_builtin_fn_arguments(
+            "col_0",
+            td.transformation_functions["col_0"],
+            {
+                "columns": [
+                    {
+                        "column": "col_0",
+                        "dataType": "Integral",
+                        "minimum": 0,
+                        "maximum": 2,
+                    }
+                ]
+            },
         )
 
         # Assert
@@ -176,9 +186,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -188,9 +202,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",IntegerType(),True),
-                                      StructField("col_1",IntegerType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", IntegerType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -198,19 +216,26 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
-        tf_fun = "{\"module_imports\": \"\", \"transformer_code\": \"# label encoder\\n" \
-                 "def label_encoder(value, value_to_index):\\n" \
-                 "    # define a mapping of values to integers\\n" \
-                 "    return value_to_index[value]\"}"
+        tf_fun = (
+            '{"module_imports": "", "transformer_code": "# label encoder\\n'
+            "def label_encoder(value, value_to_index):\\n"
+            "    # define a mapping of values to integers\\n"
+            '    return value_to_index[value]"}'
+        )
 
         td = self._create_training_dataset(tf_fun, "integer", "label_encoder", "col_1")
 
-        td.transformation_functions["col_1"] = TransformationFunctionEngine.populate_builtin_fn_arguments(
-            "col_1", td.transformation_functions["col_1"],
-            {"columns": [{"column": "col_1", "unique_values": ["test_1", "test_2"]}]}
+        td.transformation_functions[
+            "col_1"
+        ] = TransformationFunctionEngine.populate_builtin_fn_arguments(
+            "col_1",
+            td.transformation_functions["col_1"],
+            {"columns": [{"column": "col_1", "unique_values": ["test_1", "test_2"]}]},
         )
 
         # Assert
@@ -222,9 +247,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -234,9 +263,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",DoubleType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", DoubleType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [-1.0, 1.0],
@@ -244,21 +277,37 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
-        tf_fun = "{\"module_imports\": \"from datetime import datetime\", \"transformer_code\": \"" \
-                 "def standard_scaler(value, mean, std_dev):\\n    if value is None:\\n        return None\\n    " \
-                 "else:\\n        try:\\n            return (value - mean) / std_dev\\n        except " \
-                 "ZeroDivisionError:\\n            return 0\\n\"}"
+        tf_fun = (
+            '{"module_imports": "from datetime import datetime", "transformer_code": "'
+            "def standard_scaler(value, mean, std_dev):\\n    if value is None:\\n        return None\\n    "
+            "else:\\n        try:\\n            return (value - mean) / std_dev\\n        except "
+            'ZeroDivisionError:\\n            return 0\\n"}'
+        )
 
         td = self._create_training_dataset(tf_fun, "double", "standard_scaler")
 
-        mean = statistics.mean([1,2])
-        stddev = statistics.pstdev([1,2])
-        td.transformation_functions["col_0"] = TransformationFunctionEngine.populate_builtin_fn_arguments(
-            "col_0", td.transformation_functions["col_0"],
-            {"columns": [{"column": "col_0", "dataType": "Integral", "mean": mean, "stdDev": stddev}]}
+        mean = statistics.mean([1, 2])
+        stddev = statistics.pstdev([1, 2])
+        td.transformation_functions[
+            "col_0"
+        ] = TransformationFunctionEngine.populate_builtin_fn_arguments(
+            "col_0",
+            td.transformation_functions["col_0"],
+            {
+                "columns": [
+                    {
+                        "column": "col_0",
+                        "dataType": "Integral",
+                        "mean": mean,
+                        "stdDev": stddev,
+                    }
+                ]
+            },
         )
 
         # Assert
@@ -270,9 +319,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -282,9 +335,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",DoubleType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", DoubleType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [-1.0, 0.0],
@@ -292,13 +349,17 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
-        tf_fun = "{\"module_imports\": \"from datetime import datetime\", \"transformer_code\": \"" \
-                 "def robust_scaler(value, p25, p50, p75):\\n    if value is None:\\n        " \
-                 "return None\\n    else:\\n        try:\\n            return (value - p50) / (p75 - p25)\\n        " \
-                 "except ZeroDivisionError:\\n            return 0\\n\"}\n"
+        tf_fun = (
+            '{"module_imports": "from datetime import datetime", "transformer_code": "'
+            "def robust_scaler(value, p25, p50, p75):\\n    if value is None:\\n        "
+            "return None\\n    else:\\n        try:\\n            return (value - p50) / (p75 - p25)\\n        "
+            'except ZeroDivisionError:\\n            return 0\\n"}\n'
+        )
 
         td = self._create_training_dataset(tf_fun, "double", "robust_scaler")
 
@@ -306,9 +367,20 @@ class TestPythonSparkTransformationFuctions:
         percentiles[24] = 1
         percentiles[49] = 2
         percentiles[74] = 2
-        td.transformation_functions["col_0"] = TransformationFunctionEngine.populate_builtin_fn_arguments(
-            "col_0", td.transformation_functions["col_0"],
-            {"columns": [{"column": "col_0", "dataType": "Integral", "approxPercentiles": percentiles}]}
+        td.transformation_functions[
+            "col_0"
+        ] = TransformationFunctionEngine.populate_builtin_fn_arguments(
+            "col_0",
+            td.transformation_functions["col_0"],
+            {
+                "columns": [
+                    {
+                        "column": "col_0",
+                        "dataType": "Integral",
+                        "approxPercentiles": percentiles,
+                    }
+                ]
+            },
         )
 
         # Assert
@@ -320,9 +392,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -332,9 +408,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",IntegerType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [2, 3],
@@ -342,7 +422,9 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
         def tf_fun(a) -> int:
@@ -359,9 +441,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -371,9 +457,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",StringType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", StringType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": ["2", "3"],
@@ -381,7 +471,9 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
         def tf_fun(a) -> int:
@@ -398,9 +490,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1, 2],
@@ -410,9 +506,13 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",DoubleType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", DoubleType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
                 "col_0": [2.0, 3.0],
@@ -420,7 +520,9 @@ class TestPythonSparkTransformationFuctions:
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
         def tf_fun(a) -> int:
@@ -437,9 +539,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1640995200, 1640995201],
@@ -449,22 +555,36 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",TimestampType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", TimestampType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
-                "col_0": [datetime.datetime.fromtimestamp(1640995201).replace(tzinfo=datetime.timezone.utc),
-                          datetime.datetime.fromtimestamp(1640995202).replace(tzinfo=datetime.timezone.utc)],
+                "col_0": [
+                    datetime.datetime.fromtimestamp(1640995201).replace(
+                        tzinfo=datetime.timezone.utc
+                    ),
+                    datetime.datetime.fromtimestamp(1640995202).replace(
+                        tzinfo=datetime.timezone.utc
+                    ),
+                ],
                 "col_1": ["test_1", "test_2"],
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
         def tf_fun(a) -> datetime.datetime:
-            return datetime.datetime.fromtimestamp(a+1).replace(tzinfo=datetime.timezone.utc)
+            return datetime.datetime.fromtimestamp(a + 1).replace(
+                tzinfo=datetime.timezone.utc
+            )
 
         td = self._create_training_dataset(tf_fun, "datetime")
 
@@ -477,9 +597,13 @@ class TestPythonSparkTransformationFuctions:
         mocker.patch("hsfs.client.get_instance")
         spark_engine = spark.Engine()
 
-        schema = StructType([StructField("col_0",IntegerType(),True),
-                             StructField("col_1",StringType(),True),
-                             StructField("col_2",BooleanType(),True)])
+        schema = StructType(
+            [
+                StructField("col_0", IntegerType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         df = pd.DataFrame(
             data={
                 "col_0": [1641045600, 1641132000],
@@ -489,22 +613,30 @@ class TestPythonSparkTransformationFuctions:
         )
         spark_df = spark_engine._spark_session.createDataFrame(df, schema=schema)
 
-        expected_schema = StructType([StructField("col_0",DateType(),True),
-                                      StructField("col_1",StringType(),True),
-                                      StructField("col_2",BooleanType(),True)])
+        expected_schema = StructType(
+            [
+                StructField("col_0", DateType(), True),
+                StructField("col_1", StringType(), True),
+                StructField("col_2", BooleanType(), True),
+            ]
+        )
         expected_df = pd.DataFrame(
             data={
-                "col_0": [datetime.datetime.fromtimestamp(1641045601).date(),
-                          datetime.datetime.fromtimestamp(1641132001).date()],
+                "col_0": [
+                    datetime.datetime.fromtimestamp(1641045601).date(),
+                    datetime.datetime.fromtimestamp(1641132001).date(),
+                ],
                 "col_1": ["test_1", "test_2"],
                 "col_2": [True, False],
             }
         )
-        expected_spark_df = spark_engine._spark_session.createDataFrame(expected_df, schema=expected_schema)
+        expected_spark_df = spark_engine._spark_session.createDataFrame(
+            expected_df, schema=expected_schema
+        )
 
         # Arrange
         def tf_fun(a) -> datetime.datetime:
-            return datetime.datetime.fromtimestamp(a+1)
+            return datetime.datetime.fromtimestamp(a + 1)
 
         td = self._create_training_dataset(tf_fun, "date")
 
