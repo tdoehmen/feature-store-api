@@ -29,7 +29,7 @@ public class TestTagsApi {
     TagsApi tagsApi = new TagsApi(EntityEndpointType.FEATURE_GROUP);
     ObjectMapper objectMapper = new ObjectMapper();
     Object obj = tagsApi.parseTagValue(objectMapper, 4.2d);
-    Assertions.assertTrue(obj instanceof Double);
+    Assertions.assertFalse(obj instanceof Double);
   }
 
   @Test
