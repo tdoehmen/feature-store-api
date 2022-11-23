@@ -33,6 +33,7 @@ class HudiEngine:
     HUDI_HIVE_SYNC_JDBC_URL = "hoodie.datasource.hive_sync.jdbcurl"
     HUDI_HIVE_SYNC_PARTITION_FIELDS = "hoodie.datasource.hive_sync.partition_fields"
     HUDI_HIVE_SYNC_SUPPORT_TIMESTAMP = "hoodie.datasource.hive_sync.support_timestamp"
+    HUDI_HIVE_STYLE_PARTITIONING = "hoodie.datasource.write.hive_style_partitioning"
 
     HUDI_KEY_GENERATOR_OPT_KEY = "hoodie.datasource.write.keygenerator.class"
     HUDI_COMPLEX_KEY_GENERATOR_OPT_VAL = "org.apache.hudi.keygen.CustomKeyGenerator"
@@ -172,6 +173,7 @@ class HudiEngine:
             self.HUDI_HIVE_SYNC_PARTITION_FIELDS: partition_key,
             self.HUDI_TABLE_OPERATION: operation,
             self.HUDI_HIVE_SYNC_SUPPORT_TIMESTAMP: "true",
+            self.HUDI_HIVE_STYLE_PARTITIONING: "true"
         }
         hudi_options.update(HudiEngine.HUDI_DEFAULT_PARALLELISM)
 
