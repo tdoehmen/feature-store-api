@@ -83,6 +83,7 @@ public class HudiEngine {
       "hoodie.datasource.hive_sync.partition_extractor_class";
   private static final String HUDI_HIVE_SYNC_SUPPORT_TIMESTAMP =
       "hoodie.datasource.hive_sync.support_timestamp";
+  protected static final String HUDI_HIVE_STYLE_PARTITIONING = "hoodie.datasource.write.hive_style_partitioning";
   protected static final String DEFAULT_HIVE_PARTITION_EXTRACTOR_CLASS_OPT_VAL =
       "org.apache.hudi.hive.MultiPartKeysValueExtractor";
   protected static final String HIVE_NON_PARTITION_EXTRACTOR_CLASS_OPT_VAL =
@@ -250,6 +251,7 @@ public class HudiEngine {
     hudiArgs.put(HUDI_HIVE_SYNC_DB, featureGroup.getFeatureStore().getName());
     hudiArgs.put(HIVE_AUTO_CREATE_DATABASE_OPT_KEY, HIVE_AUTO_CREATE_DATABASE_OPT_VAL);
     hudiArgs.put(HUDI_HIVE_SYNC_SUPPORT_TIMESTAMP, "true");
+    hudiArgs.put(HUDI_HIVE_STYLE_PARTITIONING, "true");
     hudiArgs.put(HUDI_TABLE_OPERATION, operation.getValue());
     hudiArgs.putAll(HUDI_DEFAULT_PARALLELISM);
 
