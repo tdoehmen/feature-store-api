@@ -36,6 +36,7 @@ from hsfs.core import (
     code_engine,
     external_feature_group_engine,
     validation_result_engine,
+    arrow_flight_client,
 )
 
 from hsfs.statistics_config import StatisticsConfig
@@ -895,6 +896,7 @@ class FeatureGroup(FeatureGroupBase):
         self._feature_group_engine = feature_group_engine.FeatureGroupEngine(
             featurestore_id
         )
+        self._arrow_flight_client = arrow_flight_client.FlightClient().get_instance()
 
     def read(
         self,
@@ -947,6 +949,9 @@ class FeatureGroup(FeatureGroupBase):
         # Raises
             `RestAPIError`. No data is available for feature group with this commit date, If time travel enabled.
         """
+        if 'use_arrow_flight_server' in read_options and read_options['use_arrow_flight_server']:
+            return self._arrow_flight_client.get_feature_group(self)
+
         engine.get_instance().set_job_group(
             "Fetching Feature group",
             "Getting feature group: {} from the featurestore {}".format(
