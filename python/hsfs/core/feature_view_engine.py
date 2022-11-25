@@ -282,7 +282,7 @@ class FeatureViewEngine:
         if td_updated.training_dataset_type != td_updated.IN_MEMORY:
             if use_arrow_flight_server:
                 split_df = self._arrow_flight_client.get_training_dataset(
-                    feature_view_obj
+                    feature_view_obj, training_dataset_version
                 )
             else:
                 split_df = self._read_from_storage_connector(

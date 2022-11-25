@@ -72,14 +72,20 @@ class FlightClient:
         training_dataset_metadata = self._training_dataset_metadata_from_feature_view(
             feature_view, version
         )
-        path = f"{training_dataset_metadata['featurestore_name']}_Training_Datasets/{training_dataset_metadata['name']}_{training_dataset_metadata['version']}.parquet"
+        path = (
+            f"{training_dataset_metadata['featurestore_name']}_Training_Datasets/"
+            f"{training_dataset_metadata['name']}_{training_dataset_metadata['version']}"
+            f"_{training_dataset_metadata['tds_version']}/"
+            f"{training_dataset_metadata['name']}_{training_dataset_metadata['version']}.parquet"
+        )
         full_path = f"/Projects/{training_dataset_metadata['featurestore_name']}/{path}"
         return full_path
 
     def _training_dataset_metadata_from_feature_view(self, feature_view, version):
         training_dataset_metadata = {}
         training_dataset_metadata["name"] = feature_view.name
-        training_dataset_metadata["version"] = f"{feature_view.version}_{version}"
+        training_dataset_metadata["version"] = f"{feature_view.version}"
+        training_dataset_metadata["tds_version"] = f"{version}"
         query = feature_view.query
         duckdb_query = (
             query.to_string()
