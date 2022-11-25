@@ -273,7 +273,10 @@ class FeatureViewEngine:
                 f"Incorrect `get` method is used. Use `feature_view.{method_name}` instead."
             )
 
-        use_arrow_flight_server = read_options.get("use_arrow_flight_server")
+        # check read options
+        use_arrow_flight_server = read_options and read_options.get(
+            "use_arrow_flight_server"
+        )
 
         read_options = engine.get_instance().read_options(
             td_updated.data_format, read_options
@@ -417,7 +420,7 @@ class FeatureViewEngine:
         else:
             raise ValueError("No training dataset object or version is provided")
 
-        if user_write_options.get("use_arrow_flight_server"):
+        if user_write_options and user_write_options.get("use_arrow_flight_server"):
             td_job = self._arrow_flight_client.create_training_dataset(
                 feature_view_obj, training_dataset_obj.version
             )
