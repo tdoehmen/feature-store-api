@@ -273,15 +273,14 @@ class FeatureViewEngine:
                 f"Incorrect `get` method is used. Use `feature_view.{method_name}` instead."
             )
 
+        use_arrow_flight_server = read_options.get("use_arrow_flight_server")
+
         read_options = engine.get_instance().read_options(
             td_updated.data_format, read_options
         )
 
         if td_updated.training_dataset_type != td_updated.IN_MEMORY:
-            if (
-                "use_arrow_flight_server" in read_options
-                and read_options["use_arrow_flight_server"]
-            ):
+            if use_arrow_flight_server:
                 split_df = self._arrow_flight_client.get_training_dataset(
                     feature_view_obj
                 )
@@ -418,11 +417,10 @@ class FeatureViewEngine:
         else:
             raise ValueError("No training dataset object or version is provided")
 
-        if (
-            "use_arrow_flight_server" in user_write_options
-            and user_write_options["use_arrow_flight_server"]
-        ):
-            td_job = self._arrow_flight_client.create_training_dataset(feature_view_obj)
+        if user_write_options.get("use_arrow_flight_server"):
+            td_job = self._arrow_flight_client.create_training_dataset(
+                feature_view_obj, training_dataset_obj.version
+            )
         else:
             batch_query = self.get_batch_query(
                 feature_view_obj,

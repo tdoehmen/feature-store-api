@@ -79,7 +79,7 @@ class FlightClient:
     def _training_dataset_metadata_from_feature_view(self, feature_view, version):
         training_dataset_metadata = {}
         training_dataset_metadata["name"] = feature_view.name
-        training_dataset_metadata["version"] = feature_view.version
+        training_dataset_metadata["version"] = f"{feature_view.version}_{version}"
         query = feature_view.query
         duckdb_query = (
             query.to_string()
