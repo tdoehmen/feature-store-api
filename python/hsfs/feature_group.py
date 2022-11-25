@@ -896,7 +896,7 @@ class FeatureGroup(FeatureGroupBase):
         self._feature_group_engine = feature_group_engine.FeatureGroupEngine(
             featurestore_id
         )
-        self._arrow_flight_client = arrow_flight_client.FlightClient().get_instance()
+        self._arrow_flight_client = arrow_flight_client.FlightClient.get_instance()
 
     def read(
         self,

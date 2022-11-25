@@ -69,7 +69,7 @@ class FeatureViewEngine:
             feature_store_id
         )
         self._query_constructor_api = query_constructor_api.QueryConstructorApi()
-        self._arrow_flight_client = arrow_flight_client.FlightClient().get_instance()
+        self._arrow_flight_client = arrow_flight_client.FlightClient.get_instance()
 
     def save(self, feature_view_obj):
         if feature_view_obj.query.is_time_travel():
