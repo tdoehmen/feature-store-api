@@ -5,6 +5,7 @@ import pyarrow.flight
 
 
 class FlightClient:
+    instance = 0
 
     @classmethod
     def get_instance(cls):
