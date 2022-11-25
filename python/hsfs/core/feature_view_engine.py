@@ -278,8 +278,13 @@ class FeatureViewEngine:
         )
 
         if td_updated.training_dataset_type != td_updated.IN_MEMORY:
-            if 'use_arrow_flight_server' in read_options and read_options['use_arrow_flight_server']:
-                split_df = self._arrow_flight_client.get_training_dataset(feature_view_obj)
+            if (
+                "use_arrow_flight_server" in read_options
+                and read_options["use_arrow_flight_server"]
+            ):
+                split_df = self._arrow_flight_client.get_training_dataset(
+                    feature_view_obj
+                )
             else:
                 split_df = self._read_from_storage_connector(
                     td_updated, td_updated.splits, read_options
@@ -413,10 +418,11 @@ class FeatureViewEngine:
         else:
             raise ValueError("No training dataset object or version is provided")
 
-        if 'use_arrow_flight_server' in user_write_options and user_write_options['use_arrow_flight_server']:
-            td_job = self._arrow_flight_client.create_training_dataset(feature_view_obj.name,
-                                                                       feature_view_obj.version,
-                                                                       feature_view_obj.query)
+        if (
+            "use_arrow_flight_server" in user_write_options
+            and user_write_options["use_arrow_flight_server"]
+        ):
+            td_job = self._arrow_flight_client.create_training_dataset(feature_view_obj)
         else:
             batch_query = self.get_batch_query(
                 feature_view_obj,

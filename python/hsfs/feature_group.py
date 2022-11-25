@@ -949,7 +949,10 @@ class FeatureGroup(FeatureGroupBase):
         # Raises
             `RestAPIError`. No data is available for feature group with this commit date, If time travel enabled.
         """
-        if 'use_arrow_flight_server' in read_options and read_options['use_arrow_flight_server']:
+        if (
+            "use_arrow_flight_server" in read_options
+            and read_options["use_arrow_flight_server"]
+        ):
             return self._arrow_flight_client.get_feature_group(self)
 
         engine.get_instance().set_job_group(

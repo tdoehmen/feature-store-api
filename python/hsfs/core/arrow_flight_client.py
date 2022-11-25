@@ -5,7 +5,7 @@ import pyarrow.flight
 
 
 class FlightClient:
-    instance = 0
+    instance = None
 
     @classmethod
     def get_instance(cls):
@@ -14,7 +14,7 @@ class FlightClient:
         return cls.instance
 
     def __init__(self, host_url):
-        self.connection = pyarrow.flight.FlightClient(host_url,**{})
+        self.connection = pyarrow.flight.FlightClient(host_url, **{})
         self._check_connection()
 
     def _check_connection(self):
@@ -38,7 +38,7 @@ class FlightClient:
                 print("Command:", descriptor.command)
             else:
                 print("Unknown descriptor type")
-            print('---')
+            print("---")
 
     def get_feature_group(self, feature_group):
         fg_name = f"{feature_group.feature_store_name.replace('_featurestore','')}.{feature_group.name}_{feature_group.version}"
@@ -56,7 +56,9 @@ class FlightClient:
         return reader.read_all()
 
     def create_training_dataset(self, feature_view, version=1):
-        training_dataset_metadata = self._training_dataset_metadata_from_feature_view(feature_view, version)
+        training_dataset_metadata = self._training_dataset_metadata_from_feature_view(
+            feature_view, version
+        )
         try:
             training_dataset_encoded = pickle.dumps(training_dataset_metadata)
             buf = pyarrow.py_buffer(training_dataset_encoded)
@@ -67,7 +69,9 @@ class FlightClient:
             print("Error calling action:", e)
 
     def _path_from_feature_view(self, feature_view, version):
-        training_dataset_metadata = self._training_dataset_metadata_from_feature_view(feature_view, version)
+        training_dataset_metadata = self._training_dataset_metadata_from_feature_view(
+            feature_view, version
+        )
         path = f"{training_dataset_metadata['featurestore_name']}_Training_Datasets/{training_dataset_metadata['name']}_{training_dataset_metadata['version']}.parquet"
         full_path = f"/Projects/{training_dataset_metadata['featurestore_name']}/{path}"
         return full_path
@@ -77,19 +81,26 @@ class FlightClient:
         training_dataset_metadata["name"] = feature_view.name
         training_dataset_metadata["version"] = feature_view.version
         query = feature_view.query
-        duckdb_query = query.to_string().replace(f"`{query._left_feature_group.feature_store_name}`.`",
-                                                 f"`{query._left_feature_group.feature_store_name.replace('_featurestore','')}.") \
-                                                 .replace("`","\"")
+        duckdb_query = (
+            query.to_string()
+            .replace(
+                f"`{query._left_feature_group.feature_store_name}`.`",
+                f"`{query._left_feature_group.feature_store_name.replace('_featurestore','')}.",
+            )
+            .replace("`", '"')
+        )
         training_dataset_metadata["query"] = duckdb_query
         training_dataset_metadata["feature_groups"] = self._get_tables_from_query(query)
-        training_dataset_metadata["featurestore_name"] = query._left_feature_group.feature_store_name.replace("_featurestore","")
+        training_dataset_metadata[
+            "featurestore_name"
+        ] = query._left_feature_group.feature_store_name.replace("_featurestore", "")
         return training_dataset_metadata
 
     def _get_tables_from_query(self, query):
         tables = []
         fg = query._left_feature_group
         fg_name = f"{fg.feature_store_name.replace('_featurestore','')}.{fg.name}_{fg.version}"
-        fg_filter = query._filter
+        # fg_filter = query._filter
         tables.append((fg_name, None))
 
         for join in query._joins:

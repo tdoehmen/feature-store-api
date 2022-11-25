@@ -173,7 +173,7 @@ class HudiEngine:
             self.HUDI_HIVE_SYNC_PARTITION_FIELDS: partition_key,
             self.HUDI_TABLE_OPERATION: operation,
             self.HUDI_HIVE_SYNC_SUPPORT_TIMESTAMP: "true",
-            self.HUDI_HIVE_STYLE_PARTITIONING: "true"
+            self.HUDI_HIVE_STYLE_PARTITIONING: "true",
         }
         hudi_options.update(HudiEngine.HUDI_DEFAULT_PARALLELISM)
 
