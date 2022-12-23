@@ -18,7 +18,9 @@ class FlightClient:
 
     def __init__(self):
         self.client = client.get_instance()
-        self.host_url = self.client._get_host_port_pair()[0]
+        #host_ip = self.client._get_host_port_pair()[0]
+        host_ip = "hopsworks0.logicalclocks.com"
+        self.host_url = f"grpc+tls://{host_ip}:5005"
         (tls_root_certs, cert_chain, private_key) = self._extract_certs()
         self.connection = pyarrow.flight.FlightClient(
             location=self.host_url,
