@@ -2,6 +2,9 @@ import pickle
 
 import pyarrow
 import pyarrow.flight
+from pyarrow.flight import FlightServerError
+
+from hsfs import client
 
 
 class FlightClient:
@@ -10,12 +13,21 @@ class FlightClient:
     @classmethod
     def get_instance(cls):
         if not cls.instance:
-            cls.instance = FlightClient("grpc+tcp://localhost:5005")
+            cls.instance = FlightClient()
         return cls.instance
 
-    def __init__(self, host_url):
-        self.connection = pyarrow.flight.FlightClient(host_url, **{})
+    def __init__(self):
+        self.client = client.get_instance()
+        self.host_url = self.client._get_host_port_pair()[0]
+        (tls_root_certs, cert_chain, private_key) = self._extract_certs()
+        self.connection = pyarrow.flight.FlightClient(
+            location=self.host_url,
+            tls_root_certs=tls_root_certs,
+            cert_chain=cert_chain,
+            private_key=private_key,
+        )
         self._check_connection()
+        self._register_certificates()
 
     def _check_connection(self):
         while True:
@@ -28,23 +40,55 @@ class FlightClient:
                 if "Deadline" in str(e):
                     print("Server is not ready, waiting...")
 
-    @classmethod
-    def pretty_print_flights(cls, flights):
-        for flight in flights:
-            descriptor = flight.descriptor
-            if descriptor.descriptor_type == pyarrow.flight.DescriptorType.PATH:
-                print("Path:", descriptor.path)
-            elif descriptor.descriptor_type == pyarrow.flight.DescriptorType.CMD:
-                print("Command:", descriptor.command)
-            else:
-                print("Unknown descriptor type")
-            print("---")
+    def _handle_afs_errors(method):
+        def afs_error_handler_wrapper(*args, **kw):
+            try:
+                return method(*args, **kw)
+            except FlightServerError as e:
+                message = str(e)
+                if "Please register client certificates first." in message:
+                    self = args[0]
+                    self._register_certificates()
+                    return method(*args, **kw)
+                else:
+                    raise
 
+        return afs_error_handler_wrapper
+
+    def _extract_certs(self):
+        with open(self.client._get_ca_chain_path(), "rb") as f:
+            tls_root_certs = f.read()
+        with open(self.client._get_client_cert_path(), "r") as f:
+            cert_chain = f.read()
+        with open(self.client._get_client_key_path(), "r") as f:
+            private_key = f.read()
+        return tls_root_certs, cert_chain, private_key
+
+    def _register_certificates(self):
+        with open(self.client._get_jks_key_store_path(), "rb") as f:
+            kstore = f.read()
+        with open(self.client._get_jks_trust_store_path(), "rb") as f:
+            tstore = f.read()
+        cert_key = self.client._cert_key
+        certificates_pickled = pickle.dumps(
+            (kstore, tstore, cert_key)
+        )  # TODO dump kstore, tstore, priv-key
+        certificates_pickled_buf = pyarrow.py_buffer(certificates_pickled)
+        action = pyarrow.flight.Action(
+            "register-client-certificates", certificates_pickled_buf
+        )
+        try:
+            self.connection.do_action(action)
+        except pyarrow.lib.ArrowIOError as e:
+            print("Error calling action:", e)
+
+    @_handle_afs_errors
     def get_feature_group(self, feature_group):
-        fg_name = f"{feature_group.feature_store_name.replace('_featurestore','')}.{feature_group.name}_{feature_group.version}"
+        fg_name = f"{feature_group.feature_store_name.replace('_featurestore', '')}.{feature_group.name}_{feature_group.version}"
         descriptor = pyarrow.flight.FlightDescriptor.for_path(fg_name)
         return self._get_dataset(descriptor).to_pandas()
 
+    @_handle_afs_errors
     def get_training_dataset(self, feature_view, version=1):
         training_dataset_path = self._path_from_feature_view(feature_view, version)
         descriptor = pyarrow.flight.FlightDescriptor.for_path(training_dataset_path)
@@ -55,6 +99,7 @@ class FlightClient:
         reader = self.connection.do_get(self._info_to_ticket(info))
         return reader.read_all()
 
+    @_handle_afs_errors
     def create_training_dataset(self, feature_view, version=1):
         training_dataset_metadata = self._training_dataset_metadata_from_feature_view(
             feature_view, version
@@ -87,33 +132,40 @@ class FlightClient:
         training_dataset_metadata["version"] = f"{feature_view.version}"
         training_dataset_metadata["tds_version"] = f"{version}"
         query = feature_view.query
-        duckdb_query = (
+        query_string = (
             query.to_string()
             .replace(
                 f"`{query._left_feature_group.feature_store_name}`.`",
-                f"`{query._left_feature_group.feature_store_name.replace('_featurestore','')}.",
+                f"`{query._left_feature_group.feature_store_name.replace('_featurestore', '')}.",
             )
             .replace("`", '"')
         )
-        training_dataset_metadata["query"] = duckdb_query
-        training_dataset_metadata["feature_groups"] = self._get_tables_from_query(query)
+        tables, filters = self._get_tables_and_filters_from_query(query)
+        training_dataset_metadata["query"] = {
+            "query_string": query_string,
+            "tables": tables,
+            "filters": filters,
+        }
         training_dataset_metadata[
             "featurestore_name"
         ] = query._left_feature_group.feature_store_name.replace("_featurestore", "")
         return training_dataset_metadata
 
-    def _get_tables_from_query(self, query):
-        tables = []
+    def _get_tables_and_filters_from_query(self, query):
+        tables = {}
         fg = query._left_feature_group
-        fg_name = f"{fg.feature_store_name.replace('_featurestore','')}.{fg.name}_{fg.version}"
-        # fg_filter = query._filter
-        tables.append((fg_name, None))
+        fg_name = f"{fg.feature_store_name.replace('_featurestore', '')}.{fg.name}_{fg.version}"
+        tables[fg._id] = fg_name
+        filters = query._filter
 
         for join in query._joins:
-            join_tables = self._get_tables_from_query(join._query)
-            tables.extend(join_tables)
+            join_tables, join_filters = self._get_tables_and_filters_from_query(
+                join._query
+            )
+            tables.update(join_tables)
+            filters = filters & join_filters if join_filters is not None else filters
 
-        return tables
+        return tables, filters
 
     def _info_to_ticket(self, info):
         return info.endpoints[0].ticket
