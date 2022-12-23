@@ -18,8 +18,7 @@ class FlightClient:
 
     def __init__(self):
         self.client = client.get_instance()
-        #host_ip = self.client._get_host_port_pair()[0]
-        host_ip = "hopsworks0.logicalclocks.com"
+        host_ip = "hopsworks0.logicalclocks.com"  # self.client._get_host_port_pair()[0]
         self.host_url = f"grpc+tls://{host_ip}:5005"
         (tls_root_certs, cert_chain, private_key) = self._extract_certs()
         self.connection = pyarrow.flight.FlightClient(
@@ -123,6 +122,7 @@ class FlightClient:
             f"{training_dataset_metadata['featurestore_name']}_Training_Datasets/"
             f"{training_dataset_metadata['name']}_{training_dataset_metadata['version']}"
             f"_{training_dataset_metadata['tds_version']}/"
+            f"{training_dataset_metadata['name']}_{training_dataset_metadata['version']}/"
             f"{training_dataset_metadata['name']}_{training_dataset_metadata['version']}.parquet"
         )
         full_path = f"/Projects/{training_dataset_metadata['featurestore_name']}/{path}"
