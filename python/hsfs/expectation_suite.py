@@ -19,10 +19,12 @@ from typing import Optional, Union, List, Dict, Any
 
 import humps
 import great_expectations as ge
+import re
 
 from hsfs import util
 from hsfs.ge_expectation import GeExpectation
 from hsfs.core.expectation_engine import ExpectationEngine
+from hsfs.core.variable_api import VariableApi
 from hsfs.core import expectation_suite_engine
 from hsfs.client.exceptions import FeatureStoreException
 
@@ -59,8 +61,17 @@ class ExpectationSuite:
         self._validation_ingestion_policy = validation_ingestion_policy.upper()
         self._expectations = []
         self._href = href
-        self._feature_store_id = feature_store_id
-        self._feature_group_id = feature_group_id
+
+        if feature_store_id is not None and feature_group_id is not None:
+            self._feature_store_id = feature_store_id
+            self._feature_group_id = feature_group_id
+        elif href is not None:
+            self._init_feature_store_and_feature_group_ids_from_href(href)
+        else:
+            self._feature_group_id = None
+            self._feature_store_id = None
+
+        self._variable_api = VariableApi()
 
         # use setters because these need to be transformed from stringified json
         self.expectations = expectations
@@ -154,6 +165,14 @@ class ExpectationSuite:
             meta=self._meta,
         )
 
+    def _init_feature_store_and_feature_group_ids_from_href(self, href: str) -> None:
+        feature_store_id, feature_group_id = re.search(
+            r"\/featurestores\/([0-9]+)\/featuregroups\/([0-9]+)\/expectationsuite*",
+            href,
+        ).groups(0)
+        self._feature_store_id = int(feature_store_id)
+        self._feature_group_id = int(feature_group_id)
+
     def _init_expectation_engine(
         self, feature_store_id: int, feature_group_id: int
     ) -> None:
@@ -243,9 +262,16 @@ class ExpectationSuite:
             The expectation with expectation_id registered in the backend.
 
         # Raises
-            `RestAPIException`
+            `hsfs.client.exceptions.RestAPIError`
             `hsfs.client.exceptions.FeatureStoreException`
         """
+        major, minor = self._variable_api.parse_major_and_minor(
+            self._variable_api.get_version("hopsworks")
+        )
+        if major == "3" and minor == "0":
+            raise FeatureStoreException(
+                "The hopsworks server does not support this operation. Update server to hopsworks >3.1 to enable support."
+            )
         if self.id and self._expectation_engine:
             if ge_type:
                 return self._expectation_engine.get(expectation_id).to_ge_type()
@@ -298,9 +324,17 @@ class ExpectationSuite:
             The new expectation attached to the Feature Group.
 
         # Raises
-            `RestAPIException`
+            `hsfs.client.exceptions.RestAPIError`
             `hsfs.client.exceptions.FeatureStoreException`
         """
+        major, minor = self._variable_api.parse_major_and_minor(
+            self._variable_api.get_version("hopsworks")
+        )
+        if major == "3" and minor == "0":
+            raise FeatureStoreException(
+                "The hopsworks server does not support this operation. Update server to hopsworks >3.1 to enable support."
+            )
+
         if self.id:
             converted_expectation = self._convert_expectation(expectation=expectation)
             converted_expectation = self._expectation_engine.create(
@@ -337,9 +371,17 @@ class ExpectationSuite:
             The updated expectation attached to the Feature Group.
 
         # Raises
-            `RestAPIException`
+            `hsfs.client.exceptions.RestAPIError`
             `hsfs.client.exceptions.FeatureStoreException`
         """
+        major, minor = self._variable_api.parse_major_and_minor(
+            self._variable_api.get_version("hopsworks")
+        )
+        if major == "3" and minor == "0":
+            raise FeatureStoreException(
+                "The hopsworks server does not support this operation. Update server to hopsworks >3.1 to enable support."
+            )
+
         if self.id:
             converted_expectation = self._convert_expectation(expectation=expectation)
             # To update an expectation we need an id either from meta field or from self.id
@@ -372,9 +414,17 @@ class ExpectationSuite:
             expectation_id: Id of the expectation to remove. The expectation will be deleted both locally and from the backend.
 
         # Raises
-            `RestAPIException`
+            `hsfs.client.exceptions.RestAPIError`
             `hsfs.client.exceptions.FeatureStoreException`
         """
+        major, minor = self._variable_api.parse_major_and_minor(
+            self._variable_api.get_version("hopsworks")
+        )
+        if major == "3" and minor == "0":
+            raise FeatureStoreException(
+                "The hopsworks server does not support this operation. Update server to hopsworks >3.1 to enable support."
+            )
+
         if self.id:
             self._expectation_engine.delete(expectation_id=expectation_id)
             self.expectations = self._expectation_engine.get_expectations_by_suite_id()
@@ -389,7 +439,25 @@ class ExpectationSuite:
         return self.json()
 
     def __repr__(self):
-        return f"ExpectationSuite({self._expectation_suite_name}, {len(self._expectations)} expectations , {self._meta})"
+        es = "ExpectationSuite("
+
+        if hasattr(self, "id"):
+            es += f"id={self._id}, "
+
+        es += f"expectation_suite_name='{self._expectation_suite_name}', "
+        es += f"expectations={self._expectations}, "
+        es += f"meta={self._meta}, "
+        es += f"data_asset_type='{self._data_asset_type}', "
+        es += f"ge_cloud_id={self._ge_cloud_id}, "
+        es += f"run_validation={self._run_validation}, "
+        es += f"validation_ingestion_policy='{self._validation_ingestion_policy}'"
+
+        if hasattr(self, "_feature_group_id"):
+            es += f", feature_group_id={self._feature_group_id}, "
+            es += f"feature_store_id={self._feature_store_id}"
+
+        es += ")"
+        return es
 
     @property
     def id(self) -> Optional[int]:
@@ -408,6 +476,8 @@ class ExpectationSuite:
     @expectation_suite_name.setter
     def expectation_suite_name(self, expectation_suite_name: str):
         self._expectation_suite_name = expectation_suite_name
+        if self.id:
+            self._expectation_suite_engine.update_metadata_from_fields(**self.to_dict())
 
     @property
     def data_asset_type(self) -> str:
@@ -435,6 +505,8 @@ class ExpectationSuite:
     @run_validation.setter
     def run_validation(self, run_validation: bool):
         self._run_validation = run_validation
+        if self.id:
+            self._expectation_suite_engine.update_metadata_from_fields(**self.to_dict())
 
     @property
     def validation_ingestion_policy(self) -> str:
@@ -448,6 +520,8 @@ class ExpectationSuite:
     @validation_ingestion_policy.setter
     def validation_ingestion_policy(self, validation_ingestion_policy: str):
         self._validation_ingestion_policy = validation_ingestion_policy.upper()
+        if self.id:
+            self._expectation_suite_engine.update_metadata_from_fields(**self.to_dict())
 
     @property
     def expectations(self) -> List[GeExpectation]:
@@ -488,3 +562,7 @@ class ExpectationSuite:
             self._meta = json.loads(meta)
         else:
             raise ValueError("Meta field must be stringified json or dict.")
+
+        if self._id and hasattr(self, "_expectation_suite_engine"):
+            # Adding test on suite_engine allows to not run it on init
+            self._expectation_suite_engine.update_metadata_from_fields(**self.to_dict())

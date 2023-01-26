@@ -127,6 +127,7 @@ class FeatureViewEngine:
                     )
         self._transformation_function_engine.attach_transformation_fn(feature_view_obj)
         updated_fv = self._feature_view_api.post(feature_view_obj)
+        self.attach_transformation_function(updated_fv)
         print(
             "Feature view created successfully, explore it at \n"
             + self._get_feature_view_url(updated_fv)
@@ -140,16 +141,22 @@ class FeatureViewEngine:
     def get(self, name, version=None):
         if version:
             fv = self._feature_view_api.get_by_name_version(name, version)
-            fv.transformation_functions = self.get_attached_transformation_fn(
-                fv.name, fv.version
-            )
+            self.attach_transformation_function(fv)
         else:
             fv = self._feature_view_api.get_by_name(name)
             for _fv in fv:
-                _fv.transformation_functions = self.get_attached_transformation_fn(
-                    _fv.name, _fv.version
-                )
+                self.attach_transformation_function(_fv)
         return fv
+
+    def attach_transformation_function(self, fv):
+        fv.transformation_functions = self.get_attached_transformation_fn(
+            fv.name, fv.version
+        )
+        if fv.transformation_functions:
+            for feature in fv.schema:
+                feature.transformation_function = fv.transformation_functions.get(
+                    feature.name, None
+                )
 
     def delete(self, name, version=None):
         if version:
@@ -377,29 +384,21 @@ class FeatureViewEngine:
             result = {}
             for split in splits:
                 path = training_data_obj.location + "/" + str(split.name)
-                result[split.name] = self._cast_column_type(
-                    training_data_obj.data_format,
-                    self._read_dir_from_storage_connector(
-                        training_data_obj, path, read_options
-                    ),
-                    schema,
+                result[split.name] = self._read_dir_from_storage_connector(
+                    training_data_obj, path, read_options
                 )
             return result
         else:
             path = training_data_obj.location + "/" + training_data_obj.name
-            return self._cast_column_type(
-                training_data_obj.data_format,
-                self._read_dir_from_storage_connector(
-                    training_data_obj, path, read_options
-                ),
-                schema,
+            return self._read_dir_from_storage_connector(
+                training_data_obj, path, read_options
             )
 
-    def _cast_column_type(self, data_format, df, schema):
+    def _cast_columns(self, data_format, df, schema):
         if data_format == "csv" or data_format == "tsv":
             if not schema:
                 raise FeatureStoreException("Reading csv, tsv requires a schema.")
-            return engine.get_instance().cast_column_type(df, schema)
+            return engine.get_instance().cast_columns(df, schema)
         else:
             return df
 
@@ -595,6 +594,23 @@ class FeatureViewEngine:
     def get_tags(self, feature_view_obj, training_dataset_version=None):
         return self._tags_api.get(
             feature_view_obj, training_dataset_version=training_dataset_version
+        )
+
+    def get_parent_feature_groups(self, feature_view_obj):
+        """Get the parents of this feature view, based on explicit provenance.
+        Parents are feature groups or external feature groups. These feature
+        groups can be accessible, deleted or inaccessible.
+        For deleted and inaccessible feature groups, only a minimal information is
+        returned.
+
+        # Arguments
+            feature_view_obj: Metadata object of feature view.
+
+        # Returns
+            `ProvenanceLinks`:  the feature groups used to generated this feature view
+        """
+        return self._feature_view_api.get_parent_feature_groups(
+            feature_view_obj.name, feature_view_obj.version
         )
 
     def _check_feature_group_accessibility(self, feature_view_obj):
