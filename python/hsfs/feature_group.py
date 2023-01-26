@@ -63,13 +63,28 @@ class FeatureGroupBase:
     def delete(self):
         """Drop the entire feature group along with its feature data.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(
+                    name='bitcoin_price',
+                    version=1
+                    )
+
+            # delete the feature group
+            fg.delete()
+            ```
+
         !!! danger "Potentially dangerous operation"
             This operation drops all metadata associated with **this version** of the
             feature group **and** all the feature data in offline and online storage
             associated with it.
 
         # Raises
-            `RestAPIError`.
+            `hsfs.client.exceptions.RestAPIError`.
         """
         self._feature_group_engine.delete(self)
 
@@ -78,6 +93,22 @@ class FeatureGroupBase:
 
         The query can be used to construct joins of feature groups or create a
         training dataset immediately.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instances
+            fg1 = fs.get_or_create_feature_group(...)
+            fg2 = fs.get_or_create_feature_group(...)
+
+            # construct the query
+            query = fg1.select_all().join(fg2.select_all())
+
+            # show first 5 rows
+            query.show(5)
+            ```
 
         # Returns
             `Query`. A query object with all features of the feature group.
@@ -94,6 +125,18 @@ class FeatureGroupBase:
 
         The query can be used to construct joins of feature groups or create a training
         dataset with a subset of features of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            # construct the query
+            fg.select(['date', 'weekly_sales', 'is_holiday'])
+            ```
 
         # Arguments
             features: list, optional. A list of `Feature` objects or feature names as
@@ -115,6 +158,18 @@ class FeatureGroupBase:
 
         The query can be used to construct joins of feature groups or create a training
         dataset with a subset of features of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            # construct the query
+            fg.select_except(['sk_id_curr','sk_id_bureau'])
+            ```
 
         # Arguments
             features: list, optional. A list of `Feature` objects or feature names as
@@ -143,24 +198,32 @@ class FeatureGroupBase:
         """Apply filter to the feature group.
 
         Selects all features and returns the resulting `Query` with the applied filter.
+        !!! example
+            ```python
+            from hsfs.feature import Feature
 
-        ```python
-        from hsfs.feature import Feature
+            # connect to the Feature Store
+            fs = ...
 
-        fg.filter(Feature("weekly_sales") > 1000)
-        ```
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.filter(Feature("weekly_sales") > 1000)
+            ```
 
         If you are planning to join the filtered feature group later on with another
         feature group, make sure to select the filtered feature explicitly from the
         respective feature group:
-        ```python
-        fg.filter(fg.feature1 == 1).show(10)
-        ```
+        !!! example
+            ```python
+            fg.filter(fg.feature1 == 1).show(10)
+            ```
 
         Composite filters require parenthesis:
-        ```python
-        fg.filter((fg.feature1 == 1) | (fg.feature2 >= 2))
-        ```
+        !!! example
+            ```python
+            fg.filter((fg.feature1 == 1) | (fg.feature2 >= 2))
+            ```
 
         # Arguments
             f: Filter object.
@@ -176,12 +239,23 @@ class FeatureGroupBase:
         A tag consists of a <name,value> pair. Tag names are unique identifiers across the whole cluster.
         The value of a tag can be any valid json - primitives, arrays or json objects.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.add_tag(name="example_tag", value="42")
+            ```
+
         # Arguments
             name: Name of the tag to be added.
             value: Value of the tag to be added.
 
         # Raises
-            `RestAPIError` in case the backend fails to add the tag.
+            `hsfs.client.exceptions.RestAPIError` in case the backend fails to add the tag.
         """
 
         self._feature_group_engine.add_tag(self, name, value)
@@ -189,16 +263,38 @@ class FeatureGroupBase:
     def delete_tag(self, name: str):
         """Delete a tag attached to a feature group.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.delete_tag("example_tag")
+            ```
+
         # Arguments
             name: Name of the tag to be removed.
 
         # Raises
-            `RestAPIError` in case the backend fails to delete the tag.
+            `hsfs.client.exceptions.RestAPIError` in case the backend fails to delete the tag.
         """
         self._feature_group_engine.delete_tag(self, name)
 
     def get_tag(self, name: str):
         """Get the tags of a feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg_tag_value = fg.get_tag("example_tag")
+            ```
 
         # Arguments
             name: Name of the tag to get.
@@ -207,7 +303,7 @@ class FeatureGroupBase:
             tag value
 
         # Raises
-            `RestAPIError` in case the backend fails to retrieve the tag.
+            `hsfs.client.exceptions.RestAPIError` in case the backend fails to retrieve the tag.
         """
         return self._feature_group_engine.get_tag(self, name)
 
@@ -218,7 +314,7 @@ class FeatureGroupBase:
             `Dict[str, obj]` of tags.
 
         # Raises
-            `RestAPIError` in case the backend fails to retrieve the tags.
+            `hsfs.client.exceptions.RestAPIError` in case the backend fails to retrieve the tags.
         """
         return self._feature_group_engine.get_tags(self)
 
@@ -227,11 +323,19 @@ class FeatureGroupBase:
 
         There are several ways to access features of a feature group:
 
-        ```python
-        fg.feature1
-        fg["feature1"]
-        fg.get_feature("feature1")
-        ```
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            # get Feature instanse
+            fg.feature1
+            fg["feature1"]
+            fg.get_feature("feature1")
+            ```
 
         !!! note
             Attribute access to features works only for non-reserved names. For example
@@ -258,17 +362,39 @@ class FeatureGroupBase:
         Change the `statistics_config` object and persist the changes by calling
         this method.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.update_statistics_config()
+            ```
+
         # Returns
             `FeatureGroup`. The updated metadata object of the feature group.
 
         # Raises
-            `RestAPIError`.
+            `hsfs.client.exceptions.RestAPIError`.
         """
         self._feature_group_engine.update_statistics_config(self)
         return self
 
     def update_description(self, description: str):
         """Update the description of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.update_description(description="Much better description.")
+            ```
 
         !!! info "Safe update"
             This method updates the feature group description safely. In case of failure
@@ -325,6 +451,18 @@ class FeatureGroupBase:
     def update_feature_description(self, feature_name: str, description: str):
         """Update the description of a single feature in this feature group.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.update_feature_description(feature_name="min_temp",
+                                          description="Much better feature description.")
+            ```
+
         !!! info "Safe update"
             This method updates the feature description safely. In case of failure
             your local metadata object will keep the old description.
@@ -343,6 +481,23 @@ class FeatureGroupBase:
 
     def append_features(self, features: Union[feature.Feature, List[feature.Feature]]):
         """Append features to the schema of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # define features to be inserted in the feature group
+            features = [
+                Feature(name="id",type="int",online_type="int"),
+                Feature(name="name",type="string",online_type="varchar(20)")
+            ]
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.append_features(features)
+            ```
 
         !!! info "Safe append"
             This method appends the features to the feature group description safely.
@@ -386,6 +541,17 @@ class FeatureGroupBase:
     ) -> Union[ExpectationSuite, ge.core.ExpectationSuite]:
         """Return the expectation suite attached to the feature group if it exists.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            exp_suite = fg.get_expectation_suite()
+            ```
+
         # Arguments
             ge_type: If `True` returns a native Great Expectation type, Hopsworks
                 custom type otherwise. Conversion can be performed via the `to_ge_type()`
@@ -415,6 +581,17 @@ class FeatureGroupBase:
         """Attach an expectation suite to a feature group and saves it for future use. If an expectation
         suite is already attached, it is replaced. Note that the provided expectation suite is modified
         inplace to include expectationId fields.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.save_expectation_suite(expectation_suite, run_validation=True)
+            ```
 
         # Arguments
             expectation_suite: The expectation suite to attach to the Feature Group.
@@ -458,6 +635,17 @@ class FeatureGroupBase:
     def delete_expectation_suite(self) -> None:
         """Delete the expectation suite attached to the Feature Group.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.delete_expectation_suite()
+            ```
+
         # Raises
             `RestAPIException`.
         """
@@ -469,6 +657,17 @@ class FeatureGroupBase:
         self, ge_type: bool = True
     ) -> Union[ValidationReport, ge.core.ExpectationSuiteValidationResult, None]:
         """Return the latest validation report attached to the Feature Group if it exists.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            latest_val_report = fg.get_latest_validation_report()
+            ```
 
         # Arguments
             ge_type: If `True` returns a native Great Expectation type, Hopsworks
@@ -488,6 +687,17 @@ class FeatureGroupBase:
     ) -> List[Union[ValidationReport, ge.core.ExpectationSuiteValidationResult]]:
         """Return the latest validation report attached to the feature group if it exists.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            val_reports = fg.get_all_validation_reports()
+            ```
+
         # Arguments
             ge_type: If `True` returns a native Great Expectation type, Hopsworks
                 custom type otherwise. Conversion can be performed via the `to_ge_type()`
@@ -497,7 +707,7 @@ class FeatureGroupBase:
             Union[List[`ValidationReport`], `ValidationReport`]. All validation reports attached to the feature group.
 
         # Raises
-            `RestAPIException`,`FeatureStoreException`.
+            `RestAPIException`,`hsfs.client.exceptions.FeatureStoreException`.
         """
         if self._id:
             return self._validation_report_engine.get_all(ge_type=ge_type)
@@ -516,6 +726,17 @@ class FeatureGroupBase:
         ge_type: bool = True,
     ) -> Union[ValidationReport, ge.core.ExpectationSuiteValidationResult]:
         """Save validation report to hopsworks platform along previous reports of the same Feature Group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.save_validation_report(validation_report, run_validation=True)
+            ```
 
         # Arguments
             validation_report: The validation report to attach to the Feature Group.
@@ -662,6 +883,17 @@ class FeatureGroupBase:
 
         If `commit_time` is `None`, the most recent statistics are returned.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg_statistics = fg.get_statistics(commit_time=None)
+            ```
+
         # Arguments
             commit_time: Date and time of the commit. Defaults to `None`. Strings should
                 be formatted in one of the following formats `%Y-%m-%d`, `%Y-%m-%d %H`, `%Y-%m-%d %H:%M`, `%Y-%m-%d %H:%M:%S`,
@@ -671,7 +903,7 @@ class FeatureGroupBase:
             `Statistics`. Statistics object.
 
         # Raises
-            `RestAPIError`.
+            `hsfs.client.exceptions.RestAPIError`.
         """
         if commit_time is None:
             return self.statistics
@@ -683,10 +915,23 @@ class FeatureGroupBase:
         feature store.
         Statistics are only computed for data in the offline storage of the feature
         group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            statistics_metadata = fg.compute_statistics()
+            ```
+
         # Returns
             `Statistics`. The statistics metadata object.
+
         # Raises
-            `RestAPIError`. Unable to persist the statistics.
+            `hsfs.client.exceptions.RestAPIError`. Unable to persist the statistics.
         """
         if self.statistics_config.enabled:
             # Don't read the dataframe here, to avoid triggering a read operation
@@ -879,7 +1124,16 @@ class FeatureGroup(FeatureGroupBase):
                 self._stream = True
             # for stream feature group time travel format is always HUDI
             if self._stream:
-                self._time_travel_format = "HUDI"
+                expected_format = "HUDI"
+                if self._time_travel_format != expected_format:
+                    warnings.warn(
+                        (
+                            "The provided time travel format `{}` has been overwritten "
+                            "because Stream enabled feature groups only support `{}`"
+                        ).format(self._time_travel_format, expected_format),
+                        util.FeatureGroupWarning,
+                    )
+                    self._time_travel_format = expected_format
 
             self.primary_key = primary_key
             self.partition_key = partition_key
@@ -917,22 +1171,25 @@ class FeatureGroup(FeatureGroupBase):
 
         !!! example "Read feature group as of latest state:"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
             fg.read()
             ```
+
         !!! example "Read feature group as of specific point in time:"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
+            fg = fs.get_or_create_feature_group(...)
             fg.read("2020-10-20 07:34:11")
             ```
+
         # Arguments
             wallclock_time: If specified will retrieve feature group as of specific point in time. Defaults to `None`.
                 If not specified, will return as of most recent time.
                 Strings should be formatted in one of the following formats `%Y-%m-%d`, `%Y-%m-%d %H`, `%Y-%m-%d %H:%M`, `%Y-%m-%d %H:%M:%S`,
                 or `%Y-%m-%d %H:%M:%S.%f`.
-
             online: bool, optional. If `True` read from online feature store, defaults
                 to `False`.
             dataframe_type: str, optional. Possible values are `"default"`, `"spark"`,
@@ -947,7 +1204,7 @@ class FeatureGroup(FeatureGroupBase):
             `list`. A two-dimensional Python list.
 
         # Raises
-            `RestAPIError`. No data is available for feature group with this commit date, If time travel enabled.
+            `hsfs.client.exceptions.RestAPIError`. No data is available for feature group with this commit date, If time travel enabled.
         """
         if read_options and read_options.get("use_arrow_flight_server"):
             return self._arrow_flight_client.get_feature_group(self)
@@ -990,13 +1247,6 @@ class FeatureGroup(FeatureGroupBase):
 
         This function only works on feature groups with `HUDI` time travel format.
 
-        !!! example "Reading commits incrementally between specified points in time:"
-            ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
-            fg.read_changes("2020-10-20 07:31:38", "2020-10-20 07:34:11").show()
-            ```
-
         # Arguments
             start_wallclock_time: Start time of the time travel query. Strings should be formatted in one of the following formats `%Y-%m-%d`, `%Y-%m-%d %H`, `%Y-%m-%d %H:%M`,
                 `%Y-%m-%d %H:%M:%S`, or `%Y-%m-%d %H:%M:%S.%f`.
@@ -1009,8 +1259,8 @@ class FeatureGroup(FeatureGroupBase):
             feature data.
 
         # Raises
-            `RestAPIError`.  No data is available for feature group with this commit date.
-            `FeatureStoreException`. If the feature group does not have `HUDI` time travel format
+            `hsfs.client.exceptions.RestAPIError`.  No data is available for feature group with this commit date.
+            `hsfs.client.exceptions.FeatureStoreException`. If the feature group does not have `HUDI` time travel format
         """
         return (
             self.select_all()
@@ -1020,6 +1270,18 @@ class FeatureGroup(FeatureGroupBase):
 
     def show(self, n: int, online: Optional[bool] = False):
         """Show the first `n` rows of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            # make a query and show top 5 rows
+            fg.select(['date','weekly_sales','is_holiday']).show(5)
+            ```
 
         # Arguments
             n: int. Number of rows to show.
@@ -1081,11 +1343,13 @@ class FeatureGroup(FeatureGroupBase):
                 * key `run_validation` boolean value, set to `False` to skip validation temporarily on ingestion.
                 * key `save_report` boolean value, set to `False` to skip upload of the validation report to Hopsworks.
                 * key `ge_validate_kwargs` a dictionary containing kwargs for the validate method of Great Expectations.
+
         # Returns
             `Job`: When using the `python` engine, it returns the Hopsworks Job
                 that was launched to ingest the feature group data.
+
         # Raises
-            `RestAPIError`. Unable to create feature group.
+            `hsfs.client.exceptions.RestAPIError`. Unable to create feature group.
         """
         feature_dataframe = engine.get_instance().convert_to_default_dataframe(features)
 
@@ -1147,13 +1411,50 @@ class FeatureGroup(FeatureGroupBase):
         If feature group doesn't exists  the insert method will create the necessary metadata the first time it is
         invoked and writes the specified `features` dataframe as feature group to the online/offline feature store.
 
-        !!! example "Upsert new feature data with time travel format `HUDI`:"
+        !!! example "Upsert new feature data with time travel format `HUDI`"
             ```python
-            fs = conn.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
-            upsert_df = ...
-            fg.insert(upsert_df)
+            # connect to the Feature Store
+            fs = ...
+
+            fg = fs.get_or_create_feature_group(
+                name='bitcoin_price',
+                description='Bitcoin price aggregated for days',
+                version=1,
+                primary_key=['unix'],
+                online_enabled=True,
+                event_time=['unix']
+            )
+
+            fg.insert(df_bitcoin_processed)
             ```
+
+        !!! example "Async insert"
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            fg1 = fs.get_or_create_feature_group(
+                name='feature_group_name1',
+                description='Description of the first FG',
+                version=1,
+                primary_key=['unix'],
+                online_enabled=True,
+                event_time=['unix']
+            )
+            # async insertion in order not to wait till finish of the job
+            fg.insert(df_for_fg1, write_options={"wait_for_job" : False})
+
+            fg2 = fs.get_or_create_feature_group(
+                name='feature_group_name2',
+                description='Description of the second FG',
+                version=1,
+                primary_key=['unix'],
+                online_enabled=True,
+                event_time=['unix']
+            )
+            fg.insert(df_for_fg2)
+            ```
+
         # Arguments
             features: DataFrame, RDD, Ndarray, list. Features to be saved.
             overwrite: Drop all data in the feature group before
@@ -1236,6 +1537,7 @@ class FeatureGroup(FeatureGroupBase):
 
         ```python
         sqm = spark.streams
+
         # get the list of active streaming queries
         [q.name for q in sqm.active]
         ```
@@ -1318,6 +1620,17 @@ class FeatureGroup(FeatureGroupBase):
         """Retrieves commit timeline for this feature group. This method can only be used
         on time travel enabled feature groups
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            commit_details = fg.commit_details()
+            ```
+
         # Arguments
             wallclock_time: Commit details as of specific point in time. Defaults to `None`.
                  Strings should be formatted in one of the following formats `%Y-%m-%d`, `%Y-%m-%d %H`, `%Y-%m-%d %H:%M`,
@@ -1329,8 +1642,8 @@ class FeatureGroup(FeatureGroupBase):
             is `Dict[str, str]` with key value pairs of date committed on, number of rows updated, inserted and deleted.
 
         # Raises
-            `RestAPIError`.
-            `FeatureStoreException`. If the feature group does not have `HUDI` time travel format
+            `hsfs.client.exceptions.RestAPIError`.
+            `hsfs.client.exceptions.FeatureStoreException`. If the feature group does not have `HUDI` time travel format
         """
         return self._feature_group_engine.commit_details(self, wallclock_time, limit)
 
@@ -1347,7 +1660,7 @@ class FeatureGroup(FeatureGroupBase):
             write_options: User provided write options. Defaults to `{}`.
 
         # Raises
-            `RestAPIError`.
+            `hsfs.client.exceptions.RestAPIError`.
         """
         self._feature_group_engine.commit_delete(self, delete_df, write_options)
 
@@ -1365,15 +1678,18 @@ class FeatureGroup(FeatureGroupBase):
 
         !!! example "Reading features at a specific point in time:"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            # get data at a specific point in time and show it
             fg.as_of("2020-10-20 07:34:11").read().show()
             ```
 
         !!! example "Reading commits incrementally between specified points in time:"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
             fg.as_of("2020-10-20 07:34:11", exclude_until="2020-10-19 07:34:11").read().show()
             ```
 
@@ -1383,8 +1699,6 @@ class FeatureGroup(FeatureGroupBase):
 
         !!! example "Reading only the changes from a single commit"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
             fg.as_of("2020-10-20 07:31:38", exclude_until="2020-10-20 07:31:37").read().show()
             ```
 
@@ -1393,25 +1707,33 @@ class FeatureGroup(FeatureGroupBase):
 
         !!! example "Reading the latest state of features, excluding commits before a specified point in time:"
             ```python
-            fs = connection.get_feature_store();
-            fg = fs.get_feature_group("example_feature_group", 1)
             fg.as_of(None, exclude_until="2020-10-20 07:31:38").read().show()
             ```
 
         Note that the interval will be applied to all joins in the query.
         If you want to query different intervals for different feature groups in
         the query, you have to apply them in a nested fashion:
-        ```python
-        fg_a.select_all().as_of(..., ...)
-            .join(fg_b.select_all().as_of(..., ...))
-        ```
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg1 = fs.get_or_create_feature_group(...)
+            fg2 = fs.get_or_create_feature_group(...)
+
+            fg1.select_all().as_of("2020-10-20", exclude_until="2020-10-19")
+                .join(fg2.select_all().as_of("2020-10-20", exclude_until="2020-10-19"))
+            ```
+
         If instead you apply another `as_of` selection after the join, all
         joined feature groups will be queried with this interval:
-        ```python
-        fg_a.select_all().as_of(..., ...)  # as_of is not applied
-            .join(fg_b.select_all().as_of(..., ...))  # as_of is not applied
-            .as_of(..., ...)
-        ```
+        !!! example
+            ```python
+            fg1.select_all().as_of("2020-10-20", exclude_until="2020-10-19")  # as_of is not applied
+                .join(fg2.select_all().as_of("2020-10-20", exclude_until="2020-10-15"))  # as_of is not applied
+                .as_of("2020-10-20", exclude_until="2020-10-19")
+            ```
 
         !!! warning
             This function only works for feature groups with time_travel_format='HUDI'.
@@ -1449,6 +1771,17 @@ class FeatureGroup(FeatureGroupBase):
         Runs any expectation attached with Deequ. But also runs attached Great Expectation
         Suites.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get feature group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            ge_report = fg.validate(df, save_report=False)
+            ```
+
         # Arguments
             dataframe: The dataframe to run the data validation expectations against.
             expectation_suite: Optionally provide an Expectation Suite to override the
@@ -1462,10 +1795,8 @@ class FeatureGroup(FeatureGroupBase):
                 is initialised and attached to the Feature Group. Defaults to False.
             ge_type: Whether to return a Great Expectations object or Hopsworks own abstraction. Defaults to True.
 
-
         # Returns
             A Validation Report produced by Great Expectations.
-
         """
         # Activity is logged only if a the validation concerns the feature group and not a specific dataframe
         if dataframe is None:
@@ -1500,7 +1831,7 @@ class FeatureGroup(FeatureGroupBase):
             `Statistics`. The statistics metadata object.
 
         # Raises
-            `RestAPIError`. Unable to persist the statistics.
+            `hsfs.client.exceptions.RestAPIError`. Unable to persist the statistics.
         """
         if self.statistics_config.enabled:
             # Don't read the dataframe here, to avoid triggering a read operation
@@ -1559,9 +1890,29 @@ class FeatureGroup(FeatureGroupBase):
         return self
 
     def json(self):
+        """Get specific Feature Group metadata in json format.
+
+        !!! example
+            ```python
+            fg.json()
+            ```
+        """
         return json.dumps(self, cls=util.FeatureStoreEncoder)
 
     def to_dict(self):
+        """Get structured info about specific Feature Group in python dictionary format.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.to_dict()
+            ```
+        """
         fg_meta_dict = {
             "id": self._id,
             "name": self._name,
@@ -1591,6 +1942,11 @@ class FeatureGroup(FeatureGroupBase):
     def get_complex_features(self):
         """Returns the names of all features with a complex data type in this
         feature group.
+
+        !!! example
+            ```python
+            complex_dtype_features = fg.get_complex_features()
+            ```
         """
         return [f.name for f in self.features if f.is_complex()]
 
@@ -1825,6 +2181,17 @@ class ExternalFeatureGroup(FeatureGroupBase):
     def read(self, dataframe_type="default"):
         """Get the feature group as a DataFrame.
 
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            df = fg.read()
+            ```
+
         !!! warning "Engine Support"
             **Spark only**
 
@@ -1845,7 +2212,7 @@ class ExternalFeatureGroup(FeatureGroupBase):
             `list`. A two-dimensional Python list.
 
         # Raises
-            `RestAPIError`.
+            `hsfs.client.exceptions.RestAPIError`.
         """
         engine.get_instance().set_job_group(
             "Fetching Feature group",
@@ -1856,7 +2223,19 @@ class ExternalFeatureGroup(FeatureGroupBase):
         return self.select_all().read(dataframe_type=dataframe_type)
 
     def show(self, n):
-        """Show the first n rows of the feature group."""
+        """Show the first n rows of the feature group.
+
+        !!! example
+            ```python
+            # connect to the Feature Store
+            fs = ...
+
+            # get the Feature Group instance
+            fg = fs.get_or_create_feature_group(...)
+
+            fg.show(5)
+            ```
+        """
         engine.get_instance().set_job_group(
             "Fetching Feature group",
             "Getting feature group: {} from the featurestore {}".format(
