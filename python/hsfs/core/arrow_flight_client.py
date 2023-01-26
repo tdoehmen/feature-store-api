@@ -18,7 +18,7 @@ class FlightClient:
 
     def __init__(self):
         self.client = client.get_instance()
-        host_ip = "hopsworks0.logicalclocks.com"  # self.client._get_host_port_pair()[0]
+        host_ip = self.client._get_host_port_pair()[0]
         self.host_url = f"grpc+tls://{host_ip}:5005"
         (tls_root_certs, cert_chain, private_key) = self._extract_certs()
         self.connection = pyarrow.flight.FlightClient(
@@ -26,6 +26,7 @@ class FlightClient:
             tls_root_certs=tls_root_certs,
             cert_chain=cert_chain,
             private_key=private_key,
+            override_hostname="namenode.service.consul"
         )
         self._check_connection()
         self._register_certificates()
