@@ -46,9 +46,11 @@ class DataGenerator:
     def create_fv(self, name, query=None):
         try:
             fv = self.fs.get_feature_view(name, version=1)
-            FeatureView.clean(self.fs._id, name, 1)
+            fv.delete()
         except RestAPIError:
             pass
+        except ValueError:
+            FeatureView.clean(self.fs._id, name, 1)
 
         fv = self.fs.create_feature_view(
             name=name,
