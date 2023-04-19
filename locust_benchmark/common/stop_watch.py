@@ -1,7 +1,7 @@
 import inspect
 import time
 from locust import events
-
+import traceback
 
 def stopwatch(func):
     def wrapper(*args, **kwargs):
@@ -19,7 +19,8 @@ def stopwatch(func):
                 request_type=task_name[:3].upper(),
                 name=task_name,
                 response_time=total,
-                exception=e,
+                exception=Exception(),
+                response_length=0,
             )
         else:
             total = int((time.time() - start) * 1000)
