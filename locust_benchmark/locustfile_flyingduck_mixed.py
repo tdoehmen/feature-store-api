@@ -10,12 +10,6 @@ def on_locust_init(environment, **kwargs):
 
     if isinstance(environment.runner, (MasterRunner, LocalRunner)):
         environment.hopsworks_client = HopsworksClient(environment)
-        environment.fg_small = environment.hopsworks_client.fs.get_feature_group("locust_small_fg1", version=1)
-        environment.fg_medium = environment.hopsworks_client.fs.get_feature_group("locust_medium_fg1", version=1)
-        environment.fg_large = environment.hopsworks_client.fs.get_feature_group("locust_large_fg1", version=1)
-        environment.fv_small = environment.hopsworks_client.fs.get_feature_view("locust_small_fv", version=1)
-        environment.fg_medium = environment.hopsworks_client.fs.get_feature_view("locust_medium_fv", version=1)
-        environment.fg_large = environment.hopsworks_client.fs.get_feature_view("locust_large_fv", version=1)
 
 @events.quitting.add_listener
 def on_locust_quitting(environment, **kwargs):
@@ -33,6 +27,7 @@ class FeatureGroupReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fg_small = environment.hopsworks_client.fs.get_feature_group("locust_small_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -42,12 +37,12 @@ class FeatureGroupReadSmall(User):
         self.client.close()
 
     @task
-    def read_feature_group(self):
+    def read_feature_group_small(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fg_small.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_small.read(read_options={"use_spark": self.env.use_hive})
 
 
 class FeatureGroupReadMedium(User):
@@ -58,6 +53,7 @@ class FeatureGroupReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fg_medium = environment.hopsworks_client.fs.get_feature_group("locust_medium_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -67,12 +63,12 @@ class FeatureGroupReadMedium(User):
         self.client.close()
 
     @task
-    def read_feature_group(self):
+    def read_feature_group_medium(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fg_medium.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_medium.read(read_options={"use_spark": self.env.use_hive})
 
 
 class FeatureGroupReadLarge(User):
@@ -83,6 +79,7 @@ class FeatureGroupReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fg_large = environment.hopsworks_client.fs.get_feature_group("locust_large_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -92,12 +89,12 @@ class FeatureGroupReadLarge(User):
         self.client.close()
 
     @task
-    def read_feature_group(self):
+    def read_feature_group_large(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fg_large.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_large.read(read_options={"use_spark": self.env.use_hive})
 
 
 class FeatureViewReadSmall(User):
@@ -108,6 +105,7 @@ class FeatureViewReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_small = environment.hopsworks_client.fs.get_feature_view("locust_small_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -117,12 +115,12 @@ class FeatureViewReadSmall(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_feature_view_small(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_small.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_small.get_batch_data(read_options={"use_spark": self.env.use_hive})
 
 
 class FeatureViewReadMedium(User):
@@ -133,6 +131,7 @@ class FeatureViewReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_medium = environment.hopsworks_client.fs.get_feature_view("locust_medium_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -142,12 +141,12 @@ class FeatureViewReadMedium(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_feature_view_medium(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_medium.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_medium.get_batch_data(read_options={"use_spark": self.env.use_hive})
 
 
 class FeatureViewReadLarge(User):
@@ -158,6 +157,7 @@ class FeatureViewReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_large = environment.hopsworks_client.fs.get_feature_view("locust_large_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -167,12 +167,12 @@ class FeatureViewReadLarge(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_feature_view_small(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_large.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_large.get_batch_data(read_options={"use_spark": self.env.use_hive})
 
 
 class TrainingDatasetReadSmall(User):
@@ -183,6 +183,7 @@ class TrainingDatasetReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_small = environment.hopsworks_client.fs.get_feature_view("locust_small_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -192,12 +193,12 @@ class TrainingDatasetReadSmall(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_training_dataset_small(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_small.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_small.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
 
 
 class TrainingDatasetReadMedium(User):
@@ -208,6 +209,7 @@ class TrainingDatasetReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_medium = environment.hopsworks_client.fs.get_feature_view("locust_medium_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -217,12 +219,12 @@ class TrainingDatasetReadMedium(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_training_dataset_medium(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_medium.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_medium.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
 
 
 class TrainingDatasetReadLarge(User):
@@ -233,6 +235,7 @@ class TrainingDatasetReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
+        self.fv_large = environment.hopsworks_client.fs.get_feature_view("locust_large_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -242,9 +245,9 @@ class TrainingDatasetReadLarge(User):
         self.client.close()
 
     @task
-    def read_feature_view(self):
+    def read_training_dataset_large(self):
         self.read()
 
     @stopwatch
     def read(self):
-        self.env.fv_large.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_large.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})

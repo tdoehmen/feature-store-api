@@ -18,7 +18,7 @@ def stopwatch(func):
                 request_type=task_name[:3].upper(),
                 name=task_name,
                 response_time=total,
-                exception=Exception(),
+                exception=Exception(e),
                 response_length=0,
             )
         else:
