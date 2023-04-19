@@ -18,7 +18,7 @@ class HopsworksClient:
         with open("hopsworks_config.json") as json_file:
             self.hopsworks_config = json.load(json_file)
         if environment is None or isinstance(
-            environment.runner, (MasterRunner, LocalRunner)
+                environment.runner, (MasterRunner, LocalRunner)
         ):
             print(self.hopsworks_config)
         self.connection = hsfs.connection(
@@ -38,6 +38,7 @@ class HopsworksClient:
             "recreate_feature_group", False
         )
         self.batch_size = self.hopsworks_config.get("batch_size", 100)
+        self.use_hive = self.hopsworks_config.get("use_hive", False)
 
     def get_or_create_fg(self):
         locust_fg = self.fs.get_or_create_feature_group(

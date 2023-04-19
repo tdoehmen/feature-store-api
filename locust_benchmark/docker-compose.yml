@@ -6,13 +6,13 @@ services:
     network_mode: "host"
     volumes:
       - ./:/home/locust
-    command: -f /home/locust/locustfile.py --master --headless -H http://master:8222 --expect-workers 8 -u 64 -r 1 -t 1000 -s 1 --html=/home/locust/result.html --logfile master.log --loglevel DEBUG
+    command: -f /home/locust/locustfile_flyingduck_mixed.py --master --headless -H http://master:8222 --expect-workers 8 -u 64 -r 1 -t 1000 -s 1 --html=/home/locust/result.html --logfile master.log --loglevel DEBUG
 
   worker:
     image: locust-hsfs:master
     network_mode: "host"  
     volumes:
       - ./:/home/locust
-    command: -f /home/locust/locustfile.py --worker --master-host localhost --master-port 5557 --logfile worker.log --loglevel DEBUG
+    command: -f /home/locust/locustfile_flyingduck_mixed.py --worker --master-host localhost --master-port 5557 --logfile worker.log --loglevel DEBUG
     scale: 8
 

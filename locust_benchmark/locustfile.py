@@ -1,5 +1,4 @@
 import random
-import time
 
 from common.hopsworks_client import HopsworksClient
 from common.stop_watch import stopwatch
@@ -27,7 +26,7 @@ def on_locust_quitting(environment, **kwargs):
         environment.hopsworks_client.close()
 
 
-class FeatureGroupRead(User):
+class FeatureVectorLookup(User):
     wait_time = constant(0)
     weight = 5
     # fixed_count = 1
@@ -36,22 +35,52 @@ class FeatureGroupRead(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fg = self.client.get_or_create_fg()
+        self.fv = self.client.get_or_create_fv()
 
     def on_start(self):
         print("Init user")
+        self.fv.init_serving(external=self.client.external)
 
     def on_stop(self):
         print("Closing user")
         self.client.close()
 
     @task
-    def read_feature_group(self):
-        self.read()
+    def get_feature_vector(self):
+        self._get_feature_vector({"ip": random.randint(0, self.client.rows - 1)})
 
     @stopwatch
-    def read(self):
-        #time.sleep(0.2)
-        self.fg.read(read_options={"use_spark":True})
-        #self.fg.read()
+    def _get_feature_vector(self, pk):
+        self.fv.get_feature_vector(pk)
 
+
+class FeatureVectorBatchLookup(User):
+    wait_time = constant(0)
+    weight = 1
+    # fixed_count = 1
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        self.env = environment
+        self.client = HopsworksClient(environment)
+        self.fv = self.client.get_or_create_fv()
+
+    def on_start(self):
+        print("Init user")
+        self.fv.init_serving(external=self.client.external)
+
+    def on_stop(self):
+        print("Closing user")
+        self.client.close()
+
+    @task
+    def get_feature_vector_batch(self):
+        pks = [
+            {"ip": random.randint(0, self.client.rows - 1)}
+            for i in range(self.client.batch_size)
+        ]
+        self._get_feature_vectors(pks)
+
+    @stopwatch
+    def _get_feature_vectors(self, pk):
+        self.fv.get_feature_vectors(pk)

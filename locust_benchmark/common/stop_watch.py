@@ -1,7 +1,6 @@
 import inspect
 import time
 from locust import events
-import traceback
 
 def stopwatch(func):
     def wrapper(*args, **kwargs):
