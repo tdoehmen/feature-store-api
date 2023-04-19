@@ -27,7 +27,7 @@ class FeatureGroupReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fg_small = environment.hopsworks_client.fs.get_feature_group("locust_small_fg1", version=1)
+        self.fg_small = self.client.fs.get_feature_group("locust_small_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -53,7 +53,7 @@ class FeatureGroupReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fg_medium = environment.hopsworks_client.fs.get_feature_group("locust_medium_fg1", version=1)
+        self.fg_medium = self.client.fs.get_feature_group("locust_medium_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -79,7 +79,7 @@ class FeatureGroupReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fg_large = environment.hopsworks_client.fs.get_feature_group("locust_large_fg1", version=1)
+        self.fg_large = self.client.fs.get_feature_group("locust_large_fg1", version=1)
 
     def on_start(self):
         print("Init user")
@@ -105,7 +105,7 @@ class FeatureViewReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_small = environment.hopsworks_client.fs.get_feature_view("locust_small_fv", version=1)
+        self.fv_small = self.client.fs.get_feature_view("locust_small_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -131,7 +131,7 @@ class FeatureViewReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_medium = environment.hopsworks_client.fs.get_feature_view("locust_medium_fv", version=1)
+        self.fv_medium = self.client.fs.get_feature_view("locust_medium_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -157,7 +157,7 @@ class FeatureViewReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_large = environment.hopsworks_client.fs.get_feature_view("locust_large_fv", version=1)
+        self.fv_large = self.client.fs.get_feature_view("locust_large_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -183,7 +183,7 @@ class TrainingDatasetReadSmall(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_small = environment.hopsworks_client.fs.get_feature_view("locust_small_fv", version=1)
+        self.fv_small = self.client.fs.get_feature_view("locust_small_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -209,7 +209,7 @@ class TrainingDatasetReadMedium(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_medium = environment.hopsworks_client.fs.get_feature_view("locust_medium_fv", version=1)
+        self.fv_medium = self.client.fs.get_feature_view("locust_medium_fv", version=1)
 
     def on_start(self):
         print("Init user")
@@ -235,7 +235,7 @@ class TrainingDatasetReadLarge(User):
         super().__init__(environment)
         self.env = environment
         self.client = HopsworksClient(environment)
-        self.fv_large = environment.hopsworks_client.fs.get_feature_view("locust_large_fv", version=1)
+        self.fv_large = self.client.fs.get_feature_view("locust_large_fv", version=1)
 
     def on_start(self):
         print("Init user")
