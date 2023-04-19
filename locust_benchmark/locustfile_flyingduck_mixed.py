@@ -42,7 +42,7 @@ class FeatureGroupReadSmall(User):
 
     @stopwatch
     def read(self):
-        self.fg_small.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_small.read(read_options={"use_spark": self.client.use_hive})
 
 
 class FeatureGroupReadMedium(User):
@@ -68,7 +68,7 @@ class FeatureGroupReadMedium(User):
 
     @stopwatch
     def read(self):
-        self.fg_medium.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_medium.read(read_options={"use_spark": self.client.use_hive})
 
 
 class FeatureGroupReadLarge(User):
@@ -94,7 +94,7 @@ class FeatureGroupReadLarge(User):
 
     @stopwatch
     def read(self):
-        self.fg_large.read(read_options={"use_spark": self.env.use_hive})
+        self.fg_large.read(read_options={"use_spark": self.client.use_hive})
 
 
 class FeatureViewReadSmall(User):
@@ -120,7 +120,7 @@ class FeatureViewReadSmall(User):
 
     @stopwatch
     def read(self):
-        self.fv_small.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_small.get_batch_data(read_options={"use_spark": self.client.use_hive})
 
 
 class FeatureViewReadMedium(User):
@@ -146,7 +146,7 @@ class FeatureViewReadMedium(User):
 
     @stopwatch
     def read(self):
-        self.fv_medium.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_medium.get_batch_data(read_options={"use_spark": self.client.use_hive})
 
 
 class FeatureViewReadLarge(User):
@@ -172,7 +172,7 @@ class FeatureViewReadLarge(User):
 
     @stopwatch
     def read(self):
-        self.fv_large.get_batch_data(read_options={"use_spark": self.env.use_hive})
+        self.fv_large.get_batch_data(read_options={"use_spark": self.client.use_hive})
 
 
 class TrainingDatasetReadSmall(User):
@@ -198,7 +198,7 @@ class TrainingDatasetReadSmall(User):
 
     @stopwatch
     def read(self):
-        self.fv_small.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_small.get_train_validation_test_split(1, read_options={"use_spark": self.client.use_hive})
 
 
 class TrainingDatasetReadMedium(User):
@@ -224,7 +224,7 @@ class TrainingDatasetReadMedium(User):
 
     @stopwatch
     def read(self):
-        self.fv_medium.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_medium.get_train_validation_test_split(1, read_options={"use_spark": self.client.use_hive})
 
 
 class TrainingDatasetReadLarge(User):
@@ -250,4 +250,4 @@ class TrainingDatasetReadLarge(User):
 
     @stopwatch
     def read(self):
-        self.fv_large.get_train_validation_test_split(1, read_options={"use_spark": self.env.use_hive})
+        self.fv_large.get_train_validation_test_split(1, read_options={"use_spark": self.client.use_hive})
