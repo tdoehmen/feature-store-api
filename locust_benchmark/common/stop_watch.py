@@ -1,3 +1,4 @@
+import traceback
 import inspect
 import time
 from locust import events
@@ -14,11 +15,12 @@ def stopwatch(func):
             result = func(*args, **kwargs)
         except Exception as e:
             total = int((time.time() - start) * 1000)
+            stack = traceback.format_exc()
             events.request.fire(
                 request_type=task_name[:3].upper(),
                 name=task_name,
                 response_time=total,
-                exception=Exception(e),
+                exception=Exception(stack),
                 response_length=0,
             )
         else:

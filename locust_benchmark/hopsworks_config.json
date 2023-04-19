@@ -7,5 +7,5 @@
     "schema_repetitions": 1,
     "recreate_feature_group": true,
     "batch_size": 100,
-    "use_hive": true
+    "use_hive": false
 }
