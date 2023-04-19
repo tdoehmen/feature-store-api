@@ -27,7 +27,7 @@ def on_locust_quitting(environment, **kwargs):
 
 class FeatureGroupReadSmall(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 5
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -52,7 +52,7 @@ class FeatureGroupReadSmall(User):
 
 class FeatureGroupReadMedium(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 2
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -102,7 +102,7 @@ class FeatureGroupReadLarge(User):
 
 class FeatureViewReadSmall(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 5
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -127,7 +127,7 @@ class FeatureViewReadSmall(User):
 
 class FeatureViewReadMedium(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 2
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -177,7 +177,7 @@ class FeatureViewReadLarge(User):
 
 class TrainingDatasetReadSmall(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 5
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -202,7 +202,7 @@ class TrainingDatasetReadSmall(User):
 
 class TrainingDatasetReadMedium(User):
     wait_time = constant(0)
-    weight = 1
+    weight = 2
 
     def __init__(self, environment):
         super().__init__(environment)
