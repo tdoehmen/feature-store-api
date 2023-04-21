@@ -13,10 +13,11 @@ class DataGenerator:
         self.connection = client.connection()
         self.fs = self.connection.get_feature_store()
 
-    def setup_locust_flyinduck(self, small_rows, medium_rows, large_rows, schema_repetitions=1):
+    def setup_locust_flyinduck(self, small_rows, medium_rows, large_rows, very_large_rows, schema_repetitions=1):
         self.create_fg_and_fvs("locust_small", small_rows, schema_repetitions)
         self.create_fg_and_fvs("locust_medium", medium_rows, schema_repetitions)
         self.create_fg_and_fvs("locust_large", large_rows, schema_repetitions)
+        self.create_fg_and_fvs("locust_very_large", very_large_rows, schema_repetitions)
 
     def create_fg_and_fvs(self, base_name, rows, schema_repetitions):
         fg1 = self.create_fg(base_name+"_fg1", rows, schema_repetitions)
@@ -86,5 +87,5 @@ class DataGenerator:
 if __name__ == "__main__":
     hopsworks_client = HopsworksClient()
     generator = DataGenerator(hopsworks_client)
-    generator.setup_locust_flyinduck(1000, 10000, 100000)
+    generator.setup_locust_flyinduck(1000, 100000, 1000000, 5000000)
     hopsworks_client.close()
