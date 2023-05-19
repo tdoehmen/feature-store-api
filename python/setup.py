@@ -15,13 +15,13 @@ def read(fname):
 setup(
     name="hsfs",
     version=__version__,
-    python_requires=">=3.7,<3.11",
+    python_requires=">=3.8,<3.11",
     install_requires=[
         "pyhumps==1.6.1",
         "requests",
         "furl",
         "boto3",
-        "pandas>=1.2.0,<2.0.0",
+        "pandas==2.0.1",
         "numpy",
         "pyjks",
         "mock",
