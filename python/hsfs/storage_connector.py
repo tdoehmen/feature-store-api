@@ -763,9 +763,11 @@ class SnowflakeConnector(StorageConnector):
         # Returns
             `DataFrame`.
         """
-        connector_options = self.snowflake_connector_options() if \
-            engine.get_type() == "python" \
+        connector_options = (
+            self.snowflake_connector_options()
+            if engine.get_type() == "python"
             else self.spark_options()
+        )
 
         options = (
             {**connector_options, **options}

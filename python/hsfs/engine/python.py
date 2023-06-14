@@ -297,6 +297,7 @@ class Engine:
 
     def _read_snowflake(self, read_options, query):
         import snowflake.connector
+
         with snowflake.connector.connect(**read_options) as con:
             cursor = con.cursor()
             res = cursor.execute(query)
