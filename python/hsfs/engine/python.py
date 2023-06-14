@@ -173,6 +173,8 @@ class Engine:
             df_list = self._read_hopsfs(location, data_format, read_options)
         elif storage_connector.type == storage_connector.S3:
             df_list = self._read_s3(storage_connector, location, data_format)
+        elif storage_connector.type == storage_connector.SNOWFLAKE:
+            df_list = self._read_snowflake(read_options, read_options.pop("query"))
         else:
             raise NotImplementedError(
                 "{} Storage Connectors for training datasets are not supported yet for external environments.".format(
@@ -293,6 +295,14 @@ class Engine:
                     df_list.append(self._read_pandas(data_format, obj["Body"]))
         return df_list
 
+    def _read_snowflake(self, read_options, query):
+        import snowflake.connector
+        with snowflake.connector.connect(**read_options) as con:
+            cursor = con.cursor()
+            res = cursor.execute(query)
+            df = res.get_result_batches()[0].to_pandas()
+        return df
+
     def read_options(self, data_format, provided_options):
         return provided_options or {}
 
@@ -314,8 +324,15 @@ class Engine:
         ).head(n)
 
     def register_external_temporary_table(self, external_fg, alias):
+        if external_fg.storage_connector.type() == StorageConnector.SNOWFLAKE:
+            external_dataset = external_fg.storage_connector.read(
+                external_fg.query,
+                external_fg.data_format,
+                external_fg.options,
+                external_fg.storage_connector._get_path(external_fg.path),
+            )
         # No op to avoid query failure
-        pass
+        return None
 
     def register_hudi_temporary_table(
         self, hudi_fg_alias, feature_store_id, feature_store_name, read_options

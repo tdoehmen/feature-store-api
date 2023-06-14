@@ -2629,7 +2629,7 @@ class ExternalFeatureGroup(FeatureGroupBase):
         self._feature_group_engine.save(self)
         self._code_engine.save_code(self)
 
-        if self.statistics_config.enabled:
+        if self.statistics_config.enabled and engine.get_type() == "spark":
             self._statistics_engine.compute_statistics(self)
 
     def insert(
