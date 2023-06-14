@@ -298,11 +298,14 @@ class Engine:
     def _read_snowflake(self, read_options, query):
         import snowflake.connector
 
+        df_list = []
         with snowflake.connector.connect(**read_options) as con:
             cursor = con.cursor()
-            res = cursor.execute(query)
-            df = res.get_result_batches()[0].to_pandas()
-        return df
+            res = cursor.execute(f"SELECT * FROM ({query}) LIMIT 10")
+            table = res.get_result_batches()[0].to_pandas()
+            df_list.append(table.to_pandas())
+
+        return df_list
 
     def read_options(self, data_format, provided_options):
         return provided_options or {}
@@ -325,7 +328,7 @@ class Engine:
         ).head(n)
 
     def register_external_temporary_table(self, external_fg, alias):
-        if external_fg.storage_connector.type() == StorageConnector.SNOWFLAKE:
+        if external_fg.storage_connector.type == StorageConnector.SNOWFLAKE:
             external_dataset = external_fg.storage_connector.read(
                 external_fg.query,
                 external_fg.data_format,
