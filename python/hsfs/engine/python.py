@@ -332,6 +332,7 @@ class Engine:
                 external_fg.options,
                 external_fg.storage_connector._get_path(external_fg.path),
             )
+            return external_dataset
         # No op to avoid query failure
         return None
 
